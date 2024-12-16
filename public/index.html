@@ -15,39 +15,40 @@
 
     <script>
         document.getElementById('uploadForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-    
-            const formData = new FormData(e.target);
-            document.getElementById('message').innerText = 'Processing...';
-    
-            try {
-                const response = await fetch('/upload', {
-                    method: 'POST',
-                    body: formData,
-                });
-    
-                if (response.ok) {
-                    const contentDisposition = response.headers.get('Content-Disposition');
-                    const filenameMatch = contentDisposition && contentDisposition.match(/filename="(.+)"/);
-                    const filename = filenameMatch ? filenameMatch[1] : 'converted.docx';
-    
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = filename; // Use dynamic filename
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                    window.URL.revokeObjectURL(url);
-                    document.getElementById('message').innerText = 'Download completed!';
-                } else {
-                    throw new Error('File transformation failed.');
-                }
-            } catch (err) {
-                document.getElementById('message').innerText = err.message;
-            }
+    e.preventDefault();
+
+    const formData = new FormData(e.target);
+    const fileInput = e.target.querySelector('input[type="file"]');
+    const originalFileName = fileInput.files[0].name.replace(/\.pdf$/i, '') + '.docx'; // Original filename + .docx
+
+    document.getElementById('message').innerText = 'Processing...';
+
+    try {
+        const response = await fetch('/upload', {
+            method: 'POST',
+            body: formData,
         });
+
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = originalFileName; // Set the original filename with .docx extension
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+
+            document.getElementById('message').innerText = 'Download completed!';
+        } else {
+            throw new Error('File transformation failed.');
+        }
+    } catch (err) {
+        document.getElementById('message').innerText = err.message;
+    }
+});
     </script>    
 </body>
 </html>
