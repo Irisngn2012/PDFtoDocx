@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF to DOCX Converter</title>
+</head>
+<body>
+    <h1>Upload PDF and Transform to DOCX</h1>
+    <form id="uploadForm" method="post" enctype="multipart/form-data" action="/upload">
+        <input type="file" name="file" accept="application/pdf" required />
+        <button type="submit">Transform</button>
+    </form>    
+    <p id="message"></p>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+    
+            const formData = new FormData(e.target);
+            document.getElementById('message').innerText = 'Processing...';
+    
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData,
+                });
+    
+                if (response.ok) {
+                    const contentDisposition = response.headers.get('Content-Disposition');
+                    const filenameMatch = contentDisposition && contentDisposition.match(/filename="(.+)"/);
+                    const filename = filenameMatch ? filenameMatch[1] : 'converted.docx';
+    
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename; // Use dynamic filename
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+                    document.getElementById('message').innerText = 'Download completed!';
+                } else {
+                    throw new Error('File transformation failed.');
+                }
+            } catch (err) {
+                document.getElementById('message').innerText = err.message;
+            }
+        });
+    </script>    
+</body>
+</html>
